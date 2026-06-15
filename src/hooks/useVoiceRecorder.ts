@@ -23,6 +23,8 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<number | null>(null);
   const maxDurationTimerRef = useRef<number | null>(null);
+  const shouldStopRef = useRef<boolean>(false);
+  const isStartingRef = useRef<boolean>(false);
 
   const clearTimers = useCallback(() => {
     if (timerRef.current) {
@@ -56,18 +58,40 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
     }
   }, []);
 
-  const startRecording = useCallback(async () => {
-    setError(null);
-    
-    if (!streamRef.current) {
-      const granted = await requestPermission();
-      if (!granted) return;
+  const stopRecording = useCallback(() => {
+    shouldStopRef.current = true;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
     }
+    setIsRecording(false);
+    clearTimers();
+  }, [clearTimers]);
 
+  const startRecording = useCallback(async () => {
+    if (isStartingRef.current) return;
+    
+    setError(null);
+    shouldStopRef.current = false;
+    isStartingRef.current = true;
+    
     try {
+      if (!streamRef.current) {
+        const granted = await requestPermission();
+        if (!granted) {
+          isStartingRef.current = false;
+          return;
+        }
+      }
+
+      if (shouldStopRef.current) {
+        isStartingRef.current = false;
+        return;
+      }
+
       const stream = streamRef.current;
       if (!stream) {
         setError('无法获取音频流');
+        isStartingRef.current = false;
         return;
       }
 
@@ -85,6 +109,12 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         const duration = Date.now() - startTimeRef.current;
         
+        if (duration < 300 || blob.size < 100) {
+          clearTimers();
+          setIsRecording(false);
+          return;
+        }
+        
         try {
           const dataUrl = await blobToDataUrl(blob);
           const voiceNote: VoiceNote = {
@@ -101,10 +131,21 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
         clearTimers();
       };
 
+      if (shouldStopRef.current) {
+        isStartingRef.current = false;
+        return;
+      }
+
       mediaRecorder.start(100);
       startTimeRef.current = Date.now();
       setIsRecording(true);
       setRecordingTime(0);
+      isStartingRef.current = false;
+
+      if (shouldStopRef.current) {
+        stopRecording();
+        return;
+      }
 
       timerRef.current = window.setInterval(() => {
         const elapsed = Date.now() - startTimeRef.current;
@@ -118,27 +159,18 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
     } catch (err) {
       setError('录音启动失败');
       setIsRecording(false);
+      isStartingRef.current = false;
       clearTimers();
     }
-  }, [requestPermission, maxDuration, onRecordingComplete, clearTimers]);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-    clearTimers();
-  }, [clearTimers]);
+  }, [requestPermission, maxDuration, onRecordingComplete, clearTimers, stopRecording]);
 
   const handlePressStart = useCallback(() => {
     startRecording();
   }, [startRecording]);
 
   const handlePressEnd = useCallback(() => {
-    if (isRecording) {
-      stopRecording();
-    }
-  }, [isRecording, stopRecording]);
+    stopRecording();
+  }, [stopRecording]);
 
   useEffect(() => {
     return () => {
