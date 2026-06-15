@@ -86,3 +86,39 @@ export function shuffleArray<T>(array: T[]): T[] {
 export function randomPick<T>(array: T[], count: number): T[] {
   return shuffleArray(array).slice(0, Math.min(count, array.length));
 }
+
+const AUDIO_STORAGE_PREFIX = 'voice-note-';
+
+export function saveVoiceNote(exhibitId: string, dataUrl: string): void {
+  try {
+    localStorage.setItem(`${AUDIO_STORAGE_PREFIX}${exhibitId}`, dataUrl);
+  } catch (e) {
+    console.error('Failed to save voice note:', e);
+  }
+}
+
+export function loadVoiceNote(exhibitId: string): string | null {
+  try {
+    return localStorage.getItem(`${AUDIO_STORAGE_PREFIX}${exhibitId}`);
+  } catch (e) {
+    console.error('Failed to load voice note:', e);
+    return null;
+  }
+}
+
+export function removeVoiceNote(exhibitId: string): void {
+  try {
+    localStorage.removeItem(`${AUDIO_STORAGE_PREFIX}${exhibitId}`);
+  } catch (e) {
+    console.error('Failed to remove voice note:', e);
+  }
+}
+
+export async function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}

@@ -1,3 +1,10 @@
+export interface VoiceNote {
+  id: string;
+  dataUrl: string;
+  duration: number;
+  createdAt: number;
+}
+
 export interface Exhibit {
   id: string;
   name: string;
@@ -6,6 +13,7 @@ export interface Exhibit {
   tags: string[];
   image: string;
   notes: string;
+  voiceNote?: VoiceNote;
   visitOrder: number;
   visitDate: string;
   createdAt: number;

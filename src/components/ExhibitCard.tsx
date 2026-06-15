@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Layers } from 'lucide-react';
+import { Calendar, Layers, Mic } from 'lucide-react';
 import TagBadge from './TagBadge';
 import type { Exhibit } from '../types';
 
@@ -37,6 +37,11 @@ export default function ExhibitCard({ exhibit, index = 0, variant = 'default', s
             {showOrder && (
               <div className="absolute top-2 left-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs font-bold text-primary-600 shadow">
                 {exhibit.visitOrder}
+              </div>
+            )}
+            {exhibit.voiceNote && (
+              <div className="absolute top-2 right-2 w-6 h-6 bg-lavender-500 rounded-full flex items-center justify-center text-white shadow">
+                <Mic size={12} />
               </div>
             )}
           </div>
@@ -86,8 +91,15 @@ export default function ExhibitCard({ exhibit, index = 0, variant = 'default', s
                     {exhibit.material}
                   </p>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-sm">
-                  {exhibit.visitOrder}
+                <div className="flex items-center gap-2">
+                  {exhibit.voiceNote && (
+                    <div className="w-6 h-6 bg-lavender-500 rounded-full flex items-center justify-center text-white">
+                      <Mic size={12} />
+                    </div>
+                  )}
+                  <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-sm">
+                    {exhibit.visitOrder}
+                  </div>
                 </div>
               </div>
               {exhibit.tags.length > 0 && (
@@ -126,6 +138,11 @@ export default function ExhibitCard({ exhibit, index = 0, variant = 'default', s
           {showOrder && (
             <div className="absolute top-3 left-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-sm font-bold text-primary-600 shadow-lg">
               {exhibit.visitOrder}
+            </div>
+          )}
+          {exhibit.voiceNote && (
+            <div className="absolute top-3 right-3 w-8 h-8 bg-lavender-500/90 backdrop-blur rounded-full flex items-center justify-center text-white shadow-lg">
+              <Mic size={14} />
             </div>
           )}
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent" />

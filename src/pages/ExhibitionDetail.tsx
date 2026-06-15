@@ -9,6 +9,7 @@ import {
   Search,
   Check,
   ChevronDown,
+  Mic,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import ExhibitCard from '../components/ExhibitCard';
@@ -293,11 +294,18 @@ export default function ExhibitionDetail() {
                         onClick={() => toggleSelect(exhibit.id)}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-mint-200 rounded-xl flex items-center justify-center text-2xl">
+                          <div className="w-12 h-12 bg-mint-200 rounded-xl flex items-center justify-center text-2xl relative">
                             🏺
+                            {exhibit.voiceNote && (
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-lavender-500 rounded-full flex items-center justify-center text-white shadow">
+                                <Mic size={10} />
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-800 truncate">{exhibit.name}</p>
+                            <p className="font-medium text-gray-800 truncate flex items-center gap-2">
+                              {exhibit.name}
+                            </p>
                             <p className="text-xs text-gray-500">{exhibit.era} · {exhibit.material}</p>
                           </div>
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${

@@ -1,28 +1,36 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Camera, X, ChevronDown, Check, Tag, Calendar, Layers, FileText, Image as ImageIcon } from 'lucide-react';
+import { Camera, X, ChevronDown, Check, Tag, Calendar, Layers, FileText, Image as ImageIcon, Mic } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import TagBadge from '../components/TagBadge';
+import VoiceRecorder from '../components/VoiceRecorder';
 import { useMuseumStore } from '../store/useMuseumStore';
 import { eraOptions, materialOptions, allTags } from '../utils/mockData';
 import { compressImage, getToday } from '../utils/storage';
+import type { VoiceNote } from '../types';
 
 export default function AddExhibit() {
   const navigate = useNavigate();
-  const { addExhibit } = useMuseumStore();
+  const { id } = useParams<{ id: string }>();
+  const { addExhibit, updateExhibit, getExhibitById } = useMuseumStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [name, setName] = useState('');
-  const [era, setEra] = useState('');
-  const [material, setMaterial] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
+  const existingExhibit = id ? getExhibitById(id) : undefined;
+  
+  const [name, setName] = useState(existingExhibit?.name || '');
+  const [era, setEra] = useState(existingExhibit?.era || '');
+  const [material, setMaterial] = useState(existingExhibit?.material || '');
+  const [tags, setTags] = useState<string[]>(existingExhibit?.tags || []);
   const [customTag, setCustomTag] = useState('');
-  const [notes, setNotes] = useState('');
-  const [image, setImage] = useState('');
+  const [notes, setNotes] = useState(existingExhibit?.notes || '');
+  const [image, setImage] = useState(existingExhibit?.image || '');
+  const [voiceNote, setVoiceNote] = useState<VoiceNote | undefined>(existingExhibit?.voiceNote);
   const [showEraPicker, setShowEraPicker] = useState(false);
   const [showMaterialPicker, setShowMaterialPicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  const isEditing = !!existingExhibit;
 
   const popularTags = allTags.slice(0, 12);
 
@@ -64,15 +72,22 @@ export default function AddExhibit() {
     setSaving(true);
     
     try {
-      addExhibit({
+      const exhibitData = {
         name: name.trim(),
         era: era || '未知',
         material: material || '未知',
         tags,
         image,
         notes: notes.trim(),
-        visitDate: getToday(),
-      });
+        voiceNote,
+        visitDate: existingExhibit?.visitDate || getToday(),
+      };
+      
+      if (isEditing && id) {
+        updateExhibit(id, exhibitData);
+      } else {
+        addExhibit(exhibitData);
+      }
       
       navigate('/collection');
     } catch (err) {
@@ -97,8 +112,8 @@ export default function AddExhibit() {
   return (
     <div className="min-h-screen pb-32 bg-cream-50">
       <PageHeader
-        title="添加新展品"
-        subtitle="记录你发现的宝贝"
+        title={isEditing ? "编辑展品" : "添加新展品"}
+        subtitle={isEditing ? "更新展品信息" : "记录你发现的宝贝"}
         showBack
         variant="mint"
       />
@@ -343,6 +358,27 @@ export default function AddExhibit() {
             className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 resize-none focus:outline-none focus:border-mint-400 focus:ring-2 focus:ring-mint-400/20 transition-all"
           />
         </motion.div>
+
+        {/* 语音备注 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-white rounded-3xl p-5 shadow-soft"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Mic size={18} className="text-lavender-500" />
+            <span className="font-semibold text-gray-800">语音备注</span>
+          </div>
+          <p className="text-xs text-gray-400 mb-4">
+            打字太慢？按住麦克风按钮直接说出来吧，最长1分钟
+          </p>
+          <VoiceRecorder
+            onRecordingComplete={setVoiceNote}
+            existingVoiceNote={voiceNote}
+            onDelete={() => setVoiceNote(undefined)}
+          />
+        </motion.div>
       </div>
 
       {/* 底部保存按钮 */}
@@ -357,7 +393,7 @@ export default function AddExhibit() {
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
-            {saving ? '保存中...' : '✨ 收藏这件展品'}
+            {saving ? '保存中...' : isEditing ? '💾 保存修改' : '✨ 收藏这件展品'}
           </button>
         </div>
       </div>

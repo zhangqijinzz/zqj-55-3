@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Exhibit, Exhibition, ChallengeRecord, AppState } from '../types';
-import { loadFromStorage, saveToStorage, generateId, getToday } from '../utils/storage';
+import type { Exhibit, Exhibition, ChallengeRecord, AppState, VoiceNote } from '../types';
+import { loadFromStorage, saveToStorage, generateId, getToday, removeVoiceNote } from '../utils/storage';
 import { mockExhibits, mockExhibitions } from '../utils/mockData';
 
 interface MuseumStore extends AppState {
@@ -9,6 +9,7 @@ interface MuseumStore extends AppState {
   init: () => void;
   
   addExhibit: (exhibit: Omit<Exhibit, 'id' | 'createdAt' | 'updatedAt' | 'visitOrder'>) => void;
+  setExhibitVoiceNote: (id: string, voiceNote: VoiceNote | undefined) => void;
   updateExhibit: (id: string, updates: Partial<Exhibit>) => void;
   deleteExhibit: (id: string) => void;
   getExhibitById: (id: string) => Exhibit | undefined;
@@ -109,9 +110,24 @@ export const useMuseumStore = create<MuseumStore>((set, get) => ({
       exhibitIds: ex.exhibitIds.filter(eid => eid !== id),
     }));
     
+    removeVoiceNote(id);
+    
     set({ exhibits: updatedExhibits, exhibitions: updatedExhibitions });
     saveToStorage(STORAGE_KEY_EXHIBITS, updatedExhibits);
     saveToStorage(STORAGE_KEY_EXHIBITIONS, updatedExhibitions);
+  },
+  
+  setExhibitVoiceNote: (id, voiceNote) => {
+    const { exhibits } = get();
+    const updated = exhibits.map(e => 
+      e.id === id ? { ...e, voiceNote, updatedAt: Date.now() } : e
+    );
+    set({ exhibits: updated });
+    saveToStorage(STORAGE_KEY_EXHIBITS, updated);
+    
+    if (!voiceNote) {
+      removeVoiceNote(id);
+    }
   },
   
   getExhibitById: (id) => {

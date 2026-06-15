@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useMuseumStore } from '../store/useMuseumStore';
 import TagBadge from '../components/TagBadge';
+import VoicePlayer from '../components/VoicePlayer';
 import type { Exhibit } from '../types';
 
 export default function ExhibitDetail() {
@@ -84,9 +85,15 @@ export default function ExhibitDetail() {
         
         {/* 编辑和删除按钮 */}
         <div className="absolute top-12 right-4 flex gap-2 z-10">
+          <Link
+            to={`/collection/${id}/edit`}
+            className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+          >
+            <Edit2 size={18} />
+          </Link>
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white"
+            className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
           >
             <Trash2 size={18} />
           </button>
@@ -187,6 +194,17 @@ export default function ExhibitDetail() {
             </div>
           </div>
 
+          {/* 语音备注 */}
+          {exhibit.voiceNote && (
+            <div className="mt-5">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="text-lg">🎙️</span>
+                语音备注
+              </h3>
+              <VoicePlayer voiceNote={exhibit.voiceNote} />
+            </div>
+          )}
+
           {/* 我的感想 */}
           <div className="mt-5">
             <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -203,14 +221,10 @@ export default function ExhibitDetail() {
               <div className="bg-gray-50 rounded-2xl p-5 text-center">
                 <p className="text-gray-400 text-sm">还没有记录感想</p>
                 <Link
-                  to="#"
+                  to={`/collection/${id}/edit`}
                   className="mt-2 text-primary-500 text-sm font-medium"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(-1);
-                  }}
                 >
-                  返回编辑
+                  去编辑
                 </Link>
               </div>
             )}
